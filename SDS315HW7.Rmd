@@ -1,0 +1,340 @@
+---
+title: "SDS315HW7"
+author: "Somya Krishna"
+date: "2025-04-02"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      eval = TRUE, 
+                      warning = TRUE,
+                      message = FALSE,
+                      fig.align = "center", 
+                      R.options = list(max.print=50))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load library
+library(tidyverse)
+library(MatchIt)
+# Questions:
+# Problem 2: Part A - do we do a different method for proportion vs. sample proportion?
+```
+
+# [Homework 7]{style="color:deeppink;"}
+
+## [Problem 1: Armfolding]{style="color:hotpink;"}
+
+#### [Part A]{style="color:pink;"}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#A. Load and examine the data. Report:
+armfold = read.csv("armfold.csv")
+#• The number of male and female students in the dataset.
+gender_count <- table(armfold$Sex)
+gender_count
+#• The sample proportion of males who folded their left arm on top.
+sample_prop_males_left <- mean(armfold$LonR_fold[armfold$Sex == "Male"] == 1)
+#• The sample proportion of females who folded their left arm on top.
+sample_prop_females_left <- mean(armfold$LonR_fold[armfold$Sex == "Female"] == 1)
+
+```
+
+• **The number of male and female students in the dataset**: 111 females and 106 males.
+
+• **The sample proportion of males who folded their left arm on top**: 0.04147465
+
+• **The sample proportion of females who folded their left arm on top**: 0.03225806
+
+#### [Part B]{style="color:pink;"}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#B. What is the observed difference in proportions between the two groups (males minus females)?
+
+# Number of males and females
+num_males = sum(armfold$Sex=="Male")
+num_females = sum(armfold$Sex=="Female")
+
+observed_difference <- prop.test(c(sample_prop_males_left, sample_prop_females_left), c(num_males, num_females))
+observed_difference
+print(0.004449982-0.003814625)
+
+```
+
+**What is the observed difference in proportions between the two groups (males minus females)?** 
+
+0.000635357
+
+#### [Part C]{style="color:pink;"}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#C. Compute a 95% confidence interval for the difference in proportions (males minus females). Report the result from R’s built-in function, but also show your work by writing out:
+#• The formula for the standard error for the difference in proportions. (Look this up in the textbook or slides, since you’re not expected to memorize this.) -> Chapter 11: Large-sample inference in textbook
+#• The values you plugged into the formula.
+#• The z* value you used and why
+
+#### Handwritten CI
+# Standard Error
+standard_error <- sqrt((sample_prop_males_left * (1 - sample_prop_males_left) / num_males) +
+                       (sample_prop_females_left * (1 - sample_prop_females_left) / num_females))
+standard_error
+
+# Z-Value
+z <- 1.96
+
+# Margin of Error
+moe <- z*standard_error
+
+# Confidence interval
+observed_difference <- sample_prop_males_left - sample_prop_females_left
+CI_lower <- observed_difference - moe
+CI_upper <- observed_difference + moe
+
+# Output the upper and lower bounds
+CI_lower
+CI_upper
+
+#### R-built-in function
+# use prop.test from textbook to do two-sample proportion test
+test_result <- prop.test(x = c(sum(armfold$LonR_fold[armfold$Sex == "Male"] == 1),
+                               sum(armfold$LonR_fold[armfold$Sex == "Female"] == 1)),
+                         n = c(num_males, num_females),
+                         conf.level = 0.95)
+test_result
+
+```
+
+95% of the values for the difference in proportions (males minus females) are in between -0.08393973 and 0.1804891
+
+• **The formula for the standard error for the difference in proportions:**
+
+s e ( \^ p 1 − \^ p 2 ) = √ \^ p 1 ⋅ ( 1 − \^ p 1 )/ N 1 + N 1 ⋅ ( 1 − \^ p 2 )/ N 2
+
+• **The values you plugged into the formula**:
+
+**\^ p 1**: sample proportion of males who fold their left hand on top
+
+**N 1**: number of males
+
+**\^ p 2**: sample proportion of females who fold their left hand on top
+
+**N 2**: number of females
+
+The standard error is 0.06745634.
+
+• **The z\* value you used and why**
+
+I used 1.96 for the z-value because that corresponds to a 95% confidence interval.
+
+#### [Part D]{style="color:pink;"}
+
+**D. Interpret your confidence interval in context by completing the blanks in this sentence: “If we were to (blank 1), then we would expect that (blank 2)."**
+
+If we were to take repeated samples of the difference in proportions for males minus females that cross left arm over right arm from people in this data science class, then we would expect that the true difference in proportions to be in between -0.08393973 and 0.1804891 with 95% confidence.
+
+#### [Part E]{style="color:pink;"}
+
+**E. In your own words, what does the standard error you calculated above represent? What is it measuring?**
+
+The standard error is the standard deviation of a sampling distribution. It tells us how precise our estimate of differences is. In this situation, our standard error is 0.06745634, which is the standard deviation of the distribution of differences for males minus females that cross left arm over right arm from people in this data science class. This number tells us how much of the sample proportions would vary if we took many samples. It is important to help us calculate the confidence interval.
+
+#### [Part F]{style="color:pink;"}
+
+**F. What does the term sampling distribution refer to in this context? Be specific about, what is varying from sample to sample, and what stays fixed.**
+
+In this context, the sampling distribution refers to the difference in proportions for males minus females that cross left arm over right arm from people in this data science class that we expect to see under the same repeated sampling procedure We expect the differences to vary but the sampling procedure to stay the same.
+
+#### [Part G]{style="color:pink;"}
+
+**G. What mathematical result or theorem justifies using a normal distribution to approximate the sampling distribution of the difference in sample proportions? Explain this result briefly in your own words.**
+
+The central limit theorem justifies using a normal distribution to approximate the sampling distribution of the difference in sample proportions because it says that sampling distributions that are based on averages of large sample sizes that are independent (the outcome of one does not affect another outcome) can be modeled as a normal distribution. The sample size is large of this sample of men and women in this data science class, and the outcome of one person's crossing arms outcome does not affect other people, so we consider the sampling distribution normal.
+
+#### [Part H]{style="color:pink;"}
+
+**H. Suppose your 95% confidence interval for the difference in proportions was [-0.01, 0.30]. Based on this, what would you say to someone who claims “there’s no sex difference in arm folding”?**
+
+This does not necessarily mean that we are sure that there is no sex difference in arm folding. This just means that there is evidence to suggest that there is no difference in arm folding for men vs. women. Since the interval includes 0, the data is consistent with the statement that there is no difference in arm folding between men and women, but we cannot completely rule out the possibility that there is a difference between men and women.
+
+#### [Part I]{style="color:pink;"}
+
+**I. Imagine repeating this experiment many times with different random samples of university students. Would the confidence interval be different across samples? Why? What should be true about the collection of all those intervals?**
+
+The confidence intervals would be different because of sampling variability, meaning that there will naturally be different results in different settings. For example, another classroom may just happen to have more men with left arms crossing over than the sample we took in the data science classroom due to chance. The confidence interval also depends on the standard error which is influenced by variability. This means that as the sample data changes, so will the standard error, and therefore the confidence interval. If the sample sizes change, so would the confidence interval. Smaller sample sizes lead to wider confidence intervals because we are not as certain of our result.
+
+In all of the intervals, 95% of the intervals will contain the true population difference in men minus women that cross left over right arms.
+
+## [Problem 2: Get out the vote]{style="color:hotpink;"}
+
+#### [Part A]{style="color:pink;"}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# read in csv
+turnout <- read.csv("turnout.csv")
+#How much more likely are GOTV call recipients to have voted in 1998? As a preliminary analysis, calculate the following quantities.
+
+#• The proportion of those receiving a GOTV call who voted in 1998.
+# SAMPLE PROPORTION = (successes)/(sample size)
+prop_recieved <- sum(turnout$GOTV_call==1&turnout$voted1998==1)/sum(turnout$GOTV_call==1)
+prop_recieved
+
+#• The sample proportion of those not receiving a GOTV call who voted in 1998.
+prop_not_recieved <- sum(turnout$GOTV_call==0&turnout$voted1998==1)/sum(turnout$GOTV_call==0)
+prop_not_recieved
+
+#• A large-sample 95% confidence interval for the difference in these two proportions: that is, the proportions of voting in 1998 (voted1998==1) for those who received a GOTV call versus those who didn’t.
+# two proportion z-test
+test2_result <- prop.test(x = c(sum(turnout$GOTV_call==1&turnout$voted1998==1),
+                               sum(turnout$GOTV_call==0&turnout$voted1998==1)),
+                         n = c(sum(turnout$GOTV_call==1), sum(turnout$GOTV_call==0)),
+                         conf.level = 0.95)
+test2_result
+```
+
+• **The proportion of those receiving a GOTV call who voted in 1998.**
+
+0.6477733
+
+• **The sample proportion of those not receiving a GOTV call who voted in 1998.**
+
+0.4442449
+
+• **A large-sample 95% confidence interval for the difference in these two proportions: that is, the proportions of voting in 1998 (voted1998==1) for those who received a GOTV call versus those who didn’t.**
+
+We are 95% confidence that the true difference in the proportion of voting in 1998 for those who received a GOTV call versus those who didn’t is in between 0.1411399 and 0.2659167 if we were to take repeated samples.
+
+#### [Part B]{style="color:pink;"}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Consider the voted1996, AGE, and MAJORPTY variables. Provide evidence that at all three of these variables are confounders that prevent the difference you observed in Part A from representing the true causal effect of the GOTV call on the likelihood that a person voted in 1998. Confounders here would be factors that make someone more likely to receive a GOTV call and to have voted in 1998. Your evidence here can consist of any appropriate plot, table, or set of summary statistics, together with an appropriate large-sample confidence interval.
+prop_voted1996_GOTV = prop.test(
+  x = c(sum(turnout$voted1996 == 1 & turnout$GOTV_call == 1), sum(turnout$voted1996 == 0 & turnout$GOTV_call == 1)),
+  n = c(sum(turnout$GOTV_call == 1), sum(turnout$GOTV_call == 1))
+)
+prop_voted1996_GOTV
+
+prop_AGE_GOTV = prop.test(
+  x = c(sum(turnout$AGE == 1 & turnout$GOTV_call == 1), sum(turnout$AGE == 0 & turnout$GOTV_call == 1)),
+  n = c(sum(turnout$GOTV_call == 1), sum(turnout$GOTV_call == 1))
+)
+prop_AGE_GOTV
+
+prop_AGE_GOTV
+
+prop_MAJORPTY_GOTV = prop.test(
+  x = c(sum(turnout$MAJORPTY == 1 & turnout$GOTV_call == 1), sum(turnout$MAJORPTY == 0 & turnout$GOTV_call == 1)),
+  n = c(sum(turnout$GOTV_call == 1), sum(turnout$GOTV_call == 1))
+)
+prop_MAJORPTY_GOTV
+
+# Show that there is a correlation
+ggplot(turnout) +
+  geom_bar(aes(x=voted1996, binwidth=2), fill = "pink3") +
+  facet_wrap(~GOTV_call, nrow=2) +
+  labs(x = "Whether the person voted in the 1996 Congressional election (1=yes, 0=no)", title = "voted 1996 vs That Voted in 1998 (1) And That Didn't Vote in 1998 (0)")
+cor(turnout$voted1996, turnout$voted1998)
+
+ggplot(turnout) +
+  geom_histogram(aes(x=AGE, binwidth=2), fill = "pink") +
+  facet_wrap(~GOTV_call, nrow=2) +
+  labs(x = "Age", title = "Ages That Voted in 1998 (1) And That Didn't Vote in 1998 (0)")
+cor(turnout$AGE, turnout$voted1998)
+
+ggplot(turnout) +
+  geom_bar(aes(x=MAJORPTY, binwidth=2), fill = "pink3") +
+  facet_wrap(~GOTV_call, nrow=2) +
+  labs(x = "Whether the person is registered as a member of either one of the two major U.S. political
+parties (1=yes, 0=no)", title = "MAJORPTY vs That Voted in 1998 (1) And That Didn't Vote in 1998 (0)")
+cor(turnout$MAJORPTY, turnout$voted1998)
+
+```
+**Consider the voted1996, AGE, and MAJORPTY variables. Provide evidence that at all three of these variables are confounders that prevent the difference you observed in Part A from representing the true causal effect of the GOTV   call on the likelihood that a person voted in 1998. Confounders here would be factors that make someone more likely to receive a GOTV call and to have voted in 1998. Your evidence here can consist of any appropriate plot, table, or set of summary statistics, together with an appropriate large-sample confidence interval.**
+
+I used a confidence interval. Since none of the confidence intervals for the variables of voted1996, AGE, and MAJORPTY versus GOTV_call include 0, I conclude that they are confounding variables.
+
+
+We can also see in our graphs that these variables are confounding. People who voted in 1996 has higher numbers of people who voted in 1998. Older ages voted more in 1998 than younger ages. People registered as a member of either one of the two major U.S. political parties voted more than those who were not registered as a member of either one of the two major U.S. political parties.
+
+
+#### [Part C]{style="color:pink;"}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Now let’s get a better estimate of the effect of the GOTV call on the likelihood that a person voted. Use matching to construct a data set with GOTV_call as our treatment variable, and with voted1996, AGE, and MAJORPTY as our “matching” or “balancing” variables. Use 5 control cases for each treated case in your matching (ratio=5). (Remember the greenbuildings.R walkthrough on matching from class before spring break.)
+
+# perform matched test
+matched_model <- matchit(GOTV_call ~ voted1996 + AGE + MAJORPTY,
+                   data = turnout,
+                   ratio = 5)
+
+#Provide evidence that your “matched” data set is, indeed, balanced with respect to the three confounders of voted1996, AGE, and MAJORPTY. (That is, show that these variables are no longer confounders for the matched data, by producing appropriate summary statistics and associated large-sample confidence intervals.) Then repeat your analysis from Part A, except using the matched data only. For this matched data set, calculate:
+
+# Check covariate balance
+summary(matched_model)
+
+# Extract only the matched pairs
+matched_data <- match.data(matched_model)
+matched_data
+
+# proportion of voters in 1998 for treatment and control
+#• The proportion of those receiving a GOTV call who voted in 1998.
+# Proportion of those who received a GOTV call and voted in 1998
+prop_treated <- mean(matched_data$voted1998[matched_data$GOTV_call == 1])
+prop_treated
+
+#• The sample proportion of those not receiving a GOTV call who voted in 1998.
+prop_control <- mean(matched_data$voted1998[matched_data$GOTV_call == 0])
+prop_control
+
+
+#• A large-sample 95% confidence interval for the difference in these two proportions: that is, the proportions of voting in 1998 (voted1998==1) for those who received a GOTV call versus those who didn’t.
+# test for the difference in proportions
+prop_test_result <- prop.test(
+  x = c(sum(matched_data$voted1998[matched_data$GOTV_call == 1]), 
+        sum(matched_data$voted1998[matched_data$GOTV_call == 0])), 
+  n = c(sum(matched_data$GOTV_call == 1), sum(matched_data$GOTV_call == 0))
+)
+prop_test_result
+
+
+#What do you conclude about the overall effect of the GOTV call on the likelihood of voting in the 1998 election?
+ggplot(matched_data) +
+  geom_bar(aes(x=voted1996, binwidth=2), fill = "pink3") +
+  facet_wrap(~GOTV_call, nrow=2) +
+  labs(x = "Whether the person voted in the 1996 Congressional election (1=yes, 0=no)", title = "voted 1996 vs That Voted in 1998 (1) And That Didn't Vote in 1998 (0)")
+cor(turnout$voted1996, turnout$voted1998)
+
+ggplot(matched_data) +
+  geom_histogram(aes(x=AGE, binwidth=2), fill = "pink") +
+  facet_wrap(~GOTV_call, nrow=2) +
+  labs(x = "Age", title = "Ages That Voted in 1998 (1) And That Didn't Vote in 1998 (0)")
+cor(turnout$AGE, turnout$voted1998)
+
+ggplot(matched_data) +
+  geom_bar(aes(x=MAJORPTY, binwidth=2), fill = "pink3") +
+  facet_wrap(~GOTV_call, nrow=2) +
+  labs(x = "Whether the person is registered as a member of either one of the two major U.S. political
+parties (1=yes, 0=no)", title = "MAJORPTY vs That Voted in 1998 (1) And That Didn't Vote in 1998 (0)")
+cor(turnout$MAJORPTY, turnout$voted1998)
+
+
+```
+• **The proportion of those receiving a GOTV call who voted in 1998.**
+
+0.6477733
+
+• **The sample proportion of those not receiving a GOTV call who voted in 1998.**
+
+0.5692308
+
+• **A large-sample 95% confidence interval for the difference in these two proportions: that is, the proportions of voting in 1998 (voted1998==1) for those who received a GOTV call versus those who didn’t.**
+
+We are 95% confidence that the true difference in the proportion of voting in 1998 for those who received a GOTV call versus those who didn’t is in between 0.01045353 and 0.14663149 if we were to take repeated samples.
+
+
+**What do you conclude about the overall effect of the GOTV call on the likelihood of voting in the 1998 election?**
+
+The confidence interval does not include 0 and the p-value is less than 0.05, so I conclude that there is evidence that there is that the GOTV call had a statistically significant effect on voter turnout. We can see from the graphs above that the variables of voted1996, AGE, and MAJORPTY are no longer confounders. 
